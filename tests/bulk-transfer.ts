@@ -67,10 +67,14 @@ describe('bulk-transfer', () => {
     const destAddres = [
       // '9RnnWGWdjJbu7yCo8hstY71qnwu6TVoCKBGLkJnP3yc2',
       // 'FhdvNwrYMSxMXuYvAsvFVAu7gRUvBNvXzFqv1pfbJkbU',
-      'EiLPoWsbPkS1T8rxRGhaS5kUY2cgjGMUof4Ugwz2zTLw'
+      // 'EiLPoWsbPkS1T8rxRGhaS5kUY2cgjGMUof4Ugwz2zTLw'
     ];
 
-    const amounts = [10000];
+    const amounts = [
+      // 10,
+      // 15,
+      // 10000
+    ];
     const tokenMintAddress = 'HSxwKQwxqafTSCvFRyEmi8S61PXLHBf3d7xWjkZ3hScP';
     const transactionObject = await bulkTransfer(tokenMintAddress, walletKeyPair, destAddres, connection, amounts)
   })
