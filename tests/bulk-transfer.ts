@@ -23,18 +23,39 @@ async function bulkTransfer(tokenMintAddress: string, wallet: web.Keypair, to: s
     const dest = to[i];
     const destPublicKey = new web3.PublicKey(dest);
 
-    const associatedDestinationTokenAccount = await mintToken.getOrCreateAssociatedAccountInfo(destPublicKey)
+    // const associatedDestinationTokenAccount = await mintToken.getOrCreateAssociatedAccountInfo(destPublicKey)
+    const associatedDestinationTokenAddr = await Token.getAssociatedTokenAddress(
+      mintToken.associatedProgramId,
+      mintToken.programId,
+      mintPublicKey,
+      destPublicKey
+    );
 
+    const receiverAccount = await connection.getAccountInfo(associatedDestinationTokenAddr);
+
+    if (receiverAccount === null) {
+      instructions.push(
+        Token.createAssociatedTokenAccountInstruction(
+          mintToken.associatedProgramId,
+          mintToken.programId,
+          mintPublicKey,
+          associatedDestinationTokenAddr,
+          destPublicKey,
+          wallet.publicKey
+        )
+      )
+    }
     instructions.push(
       Token.createTransferInstruction(
         TOKEN_PROGRAM_ID,
         fromTokenAccount.address,
-        associatedDestinationTokenAccount.address,
+        associatedDestinationTokenAddr,
         wallet.publicKey,
         [],
         amounts[i] * web3.LAMPORTS_PER_SOL
       )
     );
+    
   }
 
   const transaction = new web3.Transaction().add(...instructions);
@@ -65,15 +86,15 @@ describe('bulk-transfer', () => {
 
   it('bulk transfer', async () => {
     const destAddres = [
-      // '9RnnWGWdjJbu7yCo8hstY71qnwu6TVoCKBGLkJnP3yc2',
-      // 'FhdvNwrYMSxMXuYvAsvFVAu7gRUvBNvXzFqv1pfbJkbU',
-      // 'EiLPoWsbPkS1T8rxRGhaS5kUY2cgjGMUof4Ugwz2zTLw'
+      '9RnnWGWdjJbu7yCo8hstY71qnwu6TVoCKBGLkJnP3yc2',
+      'FhdvNwrYMSxMXuYvAsvFVAu7gRUvBNvXzFqv1pfbJkbU',
+      'EiLPoWsbPkS1T8rxRGhaS5kUY2cgjGMUof4Ugwz2zTLw'
     ];
 
     const amounts = [
-      // 10,
-      // 15,
-      // 10000
+      10,
+      15,
+      10000
     ];
     const tokenMintAddress = 'HSxwKQwxqafTSCvFRyEmi8S61PXLHBf3d7xWjkZ3hScP';
     const transactionObject = await bulkTransfer(tokenMintAddress, walletKeyPair, destAddres, connection, amounts)
