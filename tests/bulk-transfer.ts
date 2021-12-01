@@ -52,7 +52,7 @@ async function bulkTransfer(tokenMintAddress: string, wallet: web.Keypair, to: s
         associatedDestinationTokenAddr,
         wallet.publicKey,
         [],
-        amounts[i] * web3.LAMPORTS_PER_SOL
+        amounts[i] * decimals
       )
     );
     
@@ -80,6 +80,8 @@ const rawdata = fs.readFileSync(keypair);
 const keyData = JSON.parse(rawdata);
 const walletKeyPair = web3.Keypair.fromSecretKey(new Uint8Array(keyData));
 
+let decimals = web3.LAMPORTS_PER_SOL;
+
 const connection = new web3.Connection(rpcUrl);
 
 describe('bulk-transfer', () => {
@@ -88,32 +90,43 @@ describe('bulk-transfer', () => {
   const dest2 = new web3.PublicKey('DGfd7WtGFNSfc7ay1Ydo8mXdgEFecEhvuHovtK1HyYmv');
   const dest3 = new web3.PublicKey('4bakjL25tpFmFpUhaNhAyrWSzPbHqnLbzMxFgmeKCFcH');
 
-  it('main wallet token balance', async () => {
-    console.log(walletKeyPair.publicKey.toBase58())
-    const mainWalletTokens = await connection.getTokenAccountsByOwner(walletKeyPair.publicKey, {mint: new web3.PublicKey(tokenMintAddress)});
-    if(mainWalletTokens.value.length == 0)
-    {
-        console.log("Balance: 0");
-    }
-    else {
-      const token = mainWalletTokens.value.pop();
-      const balance = (await connection.getTokenAccountBalance(token.pubkey)).value.uiAmount;
-      console.log("Main wallet Balance: ", balance);
-    }
-  })
-
   it('bulk transfer', async () => {
-    const destAddres = [
-      dest1.toBase58(),
-      dest2.toBase58(),
-      dest3.toBase58()
-    ];
+    const mainWalletTokens = await connection.getTokenAccountsByOwner(walletKeyPair.publicKey, {mint: new web3.PublicKey(tokenMintAddress)});
 
     const amounts = [
       10,
       15,
       10000
     ];
+    if(mainWalletTokens.value.length == 0)
+    {
+        console.log("Token does not exists in your wallet");
+        return;
+    }
+    else {
+      const token = mainWalletTokens.value.pop();
+      const value = (await connection.getTokenAccountBalance(token.pubkey)).value;
+      let sum = 0;
+      amounts.map(amount => {
+        sum += amount;
+      })
+
+      console.log("Main wallet Balance: ", value.uiAmount);
+      if(sum > value.uiAmount) {
+        console.log("Token amount is less than what you want to send amount.");
+        return;
+      }
+
+      decimals = 10 ** value.decimals;
+      console.log("Decimals: ", decimals)
+    }
+
+    const destAddres = [
+      dest1.toBase58(),
+      dest2.toBase58(),
+      dest3.toBase58()
+    ];
+
     const transactionObject = await bulkTransfer(tokenMintAddress, walletKeyPair, destAddres, connection, amounts)
 
     const destTokens = await connection.getTokenAccountsByOwner(dest1, {mint: new web3.PublicKey(tokenMintAddress)});
