@@ -85,8 +85,8 @@ const connection = new web3.Connection(rpcUrl);
 describe('bulk-transfer', () => {
   const tokenMintAddress = '6FzDRNrhR33hmBHf5kwtUr9MxvPFc9dqwEqyzX2CEad1';
   const dest1 = new web3.PublicKey('2hi2o31i9H9ejYh2SKUvocdzXTwy7DQs9X37sCehZbYE');
-  // const dest2 = new web3.PublicKey('DGfd7WtGFNSfc7ay1Ydo8mXdgEFecEhvuHovtK1HyYmv');
-  const dest3 = new web3.PublicKey('DGfd7WtGFNSfc7ay1Ydo8mXdgEFecEhvuHovtK1HyYmv');
+  const dest2 = new web3.PublicKey('DGfd7WtGFNSfc7ay1Ydo8mXdgEFecEhvuHovtK1HyYmv');
+  const dest3 = new web3.PublicKey('4bakjL25tpFmFpUhaNhAyrWSzPbHqnLbzMxFgmeKCFcH');
 
   it('main wallet token balance', async () => {
     console.log(walletKeyPair.publicKey.toBase58())
@@ -105,13 +105,13 @@ describe('bulk-transfer', () => {
   it('bulk transfer', async () => {
     const destAddres = [
       dest1.toBase58(),
-      // dest2.toBase58(),
+      dest2.toBase58(),
       dest3.toBase58()
     ];
 
     const amounts = [
       10,
-      // 15,
+      15,
       10000
     ];
     const transactionObject = await bulkTransfer(tokenMintAddress, walletKeyPair, destAddres, connection, amounts)
@@ -127,16 +127,16 @@ describe('bulk-transfer', () => {
       console.log("Balance: ", balance);
     }
 
-    // const dest2Tokens = await connection.getTokenAccountsByOwner(dest2, {mint: new web3.PublicKey(tokenMintAddress)});
-    // if(dest2Tokens.value.length == 0)
-    // {
-    //     console.log("Balance: 0");
-    // }
-    // else {
-    //   const token = dest2Tokens.value.pop();
-    //   const balance = (await connection.getTokenAccountBalance(token.pubkey)).value.uiAmount;
-    //   console.log("Balance: ", balance);
-    // }
+    const dest2Tokens = await connection.getTokenAccountsByOwner(dest2, {mint: new web3.PublicKey(tokenMintAddress)});
+    if(dest2Tokens.value.length == 0)
+    {
+        console.log("Balance: 0");
+    }
+    else {
+      const token = dest2Tokens.value.pop();
+      const balance = (await connection.getTokenAccountBalance(token.pubkey)).value.uiAmount;
+      console.log("Balance: ", balance);
+    }
 
     const dest3Tokens = await connection.getTokenAccountsByOwner(dest3, {mint: new web3.PublicKey(tokenMintAddress)});
     if(dest3Tokens.value.length == 0)
