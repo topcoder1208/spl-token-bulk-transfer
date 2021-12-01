@@ -73,7 +73,7 @@ async function bulkTransfer(tokenMintAddress: string, wallet: web.Keypair, to: s
 const keypair = os.homedir() + '/.config/solana/id.json';
 
 // cluster can be became 'devnet' | 'testnet' | 'mainnet-beta'
-const env = 'devnet';
+const env = 'mainnet-beta';
 const rpcUrl = web3.clusterApiUrl(env);
 
 const rawdata = fs.readFileSync(keypair);
@@ -83,20 +83,70 @@ const walletKeyPair = web3.Keypair.fromSecretKey(new Uint8Array(keyData));
 const connection = new web3.Connection(rpcUrl);
 
 describe('bulk-transfer', () => {
+  const tokenMintAddress = '6FzDRNrhR33hmBHf5kwtUr9MxvPFc9dqwEqyzX2CEad1';
+  const dest1 = new web3.PublicKey('2hi2o31i9H9ejYh2SKUvocdzXTwy7DQs9X37sCehZbYE');
+  // const dest2 = new web3.PublicKey('DGfd7WtGFNSfc7ay1Ydo8mXdgEFecEhvuHovtK1HyYmv');
+  const dest3 = new web3.PublicKey('DGfd7WtGFNSfc7ay1Ydo8mXdgEFecEhvuHovtK1HyYmv');
+
+  it('main wallet token balance', async () => {
+    console.log(walletKeyPair.publicKey.toBase58())
+    const mainWalletTokens = await connection.getTokenAccountsByOwner(walletKeyPair.publicKey, {mint: new web3.PublicKey(tokenMintAddress)});
+    if(mainWalletTokens.value.length == 0)
+    {
+        console.log("Balance: 0");
+    }
+    else {
+      const token = mainWalletTokens.value.pop();
+      const balance = (await connection.getTokenAccountBalance(token.pubkey)).value.uiAmount;
+      console.log("Main wallet Balance: ", balance);
+    }
+  })
 
   it('bulk transfer', async () => {
     const destAddres = [
-      '9RnnWGWdjJbu7yCo8hstY71qnwu6TVoCKBGLkJnP3yc2',
-      'FhdvNwrYMSxMXuYvAsvFVAu7gRUvBNvXzFqv1pfbJkbU',
-      'EiLPoWsbPkS1T8rxRGhaS5kUY2cgjGMUof4Ugwz2zTLw'
+      dest1.toBase58(),
+      // dest2.toBase58(),
+      dest3.toBase58()
     ];
 
     const amounts = [
       10,
-      15,
+      // 15,
       10000
     ];
-    const tokenMintAddress = 'HSxwKQwxqafTSCvFRyEmi8S61PXLHBf3d7xWjkZ3hScP';
     const transactionObject = await bulkTransfer(tokenMintAddress, walletKeyPair, destAddres, connection, amounts)
+
+    const destTokens = await connection.getTokenAccountsByOwner(dest1, {mint: new web3.PublicKey(tokenMintAddress)});
+    if(destTokens.value.length == 0)
+    {
+        console.log("Balance: 0");
+    }
+    else {
+      const token = destTokens.value.pop();
+      const balance = (await connection.getTokenAccountBalance(token.pubkey)).value.uiAmount;
+      console.log("Balance: ", balance);
+    }
+
+    // const dest2Tokens = await connection.getTokenAccountsByOwner(dest2, {mint: new web3.PublicKey(tokenMintAddress)});
+    // if(dest2Tokens.value.length == 0)
+    // {
+    //     console.log("Balance: 0");
+    // }
+    // else {
+    //   const token = dest2Tokens.value.pop();
+    //   const balance = (await connection.getTokenAccountBalance(token.pubkey)).value.uiAmount;
+    //   console.log("Balance: ", balance);
+    // }
+
+    const dest3Tokens = await connection.getTokenAccountsByOwner(dest3, {mint: new web3.PublicKey(tokenMintAddress)});
+    if(dest3Tokens.value.length == 0)
+    {
+        console.log("Balance: 0");
+    }
+    else {
+      const token = dest3Tokens.value.pop();
+      const balance = (await connection.getTokenAccountBalance(token.pubkey)).value.uiAmount;
+      console.log("Balance: ", balance);
+    }
   })
 });
